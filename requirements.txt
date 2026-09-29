@@ -1,0 +1,10 @@
+torch
+ torchvision
+ pillow
+ numpy
+ pandas
+ matplotlib
+ scikit-image
+ opencv-python
+ pytesseract
+ultralytics

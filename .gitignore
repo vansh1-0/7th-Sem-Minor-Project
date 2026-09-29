@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+
+# Keep annotation files in GitHub so the dataset labels can be reproduced.
+# Ignore downloaded weights and generated experiment outputs.
+*.pt
+*.onnx
+*.engine
+*.torchscript
+runs/
+weights/
+
+# Dataset image files are kept outside GitHub to keep the repository manageable.
+Wagon Dataset/input/*.png
+Wagon Dataset/output/*.png
+Wagon Dataset/restored/
+Wagon Dataset/models/
+Wagon Dataset/yolo_runs/
+Wagon Dataset/yolo_wagon/images/
+Wagon Dataset/yolo_number/images/
+
+# YOLO and other generated caches
+*.cache
+*.log
+
+# Generated prediction and visualization files
+Wagon Dataset/yolo_annotation_preview.png
+Wagon Dataset/yolo_number/predict/
+Wagon Dataset/yolo_number/runs/

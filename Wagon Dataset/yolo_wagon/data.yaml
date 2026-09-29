@@ -1,0 +1,6 @@
+path: d:/B.Tech/7th Sem/Minor Project/Wagon Dataset/yolo_wagon
+train: images/train
+val: images/validation
+test: images/test
+names:
+  0: wagon

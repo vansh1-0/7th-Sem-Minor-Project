@@ -1,0 +1,27 @@
+filename,input_path,target_path,input_width,input_height,target_width,target_height,same_size,split
+image_133.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_133.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_133.png,1365,627,1365,627,True,test
+image_242.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_242.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_242.png,1092,505,1092,505,True,test
+image_86.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_86.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_86.png,1365,600,1365,600,True,test
+image_10.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_10.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_10.png,1365,627,1365,627,True,test
+image_147.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_147.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_147.png,1363,624,1363,624,True,test
+image_234.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_234.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_234.png,1251,556,1251,556,True,test
+image_217.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_217.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_217.png,1342,498,1342,498,True,test
+image_236.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_236.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_236.png,1284,514,1284,514,True,test
+image_193.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_193.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_193.png,1084,576,1084,576,True,test
+image_19.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_19.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_19.png,1365,625,1365,625,True,test
+image_204.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_204.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_204.png,1050,490,1050,490,True,test
+image_179.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_179.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_179.png,1243,489,1243,489,True,test
+image_54.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_54.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_54.png,1365,626,1365,626,True,test
+image_167.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_167.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_167.png,1277,548,1277,548,True,test
+image_65.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_65.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_65.png,1363,624,1363,624,True,test
+image_61.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_61.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_61.png,1365,612,1365,612,True,test
+image_209.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_209.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_209.png,1050,545,1050,545,True,test
+image_99.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_99.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_99.png,1365,597,1365,597,True,test
+image_118.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_118.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_118.png,1365,623,1365,623,True,test
+image_41.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_41.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_41.png,1365,624,1365,624,True,test
+image_164.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_164.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_164.png,1356,614,1356,614,True,test
+image_196.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_196.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_196.png,985,492,985,492,True,test
+image_112.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_112.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_112.png,1365,611,1365,611,True,test
+image_183.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_183.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_183.png,1241,499,1241,499,True,test
+image_33.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_33.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_33.png,1360,626,1360,626,True,test
+image_192.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\input\image_192.png,d:\B.Tech\7th Sem\Minor Project\Wagon Dataset\output\image_192.png,1001,471,1001,471,True,test
