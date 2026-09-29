@@ -18,7 +18,9 @@ The project is in active development.
 - Wagon detector training and validation using a lightweight YOLOv8n model.
 - Number-region dataset folder setup.
 - Initial number-region boxes generated from the validated wagon boxes.
-- Number-region YOLO experiment trained separately from the wagon detector.
+- Number-region detector trained separately from the wagon detector.
+- Number-region crops generated for the next restoration and OCR stages.
+- OCR-ready preprocessing generated for all number-region crops.
 - GPU and low-VRAM compatibility checks.
 - GitHub documentation and ignore rules.
 
@@ -44,6 +46,20 @@ The wagon detector validation run produced the following result:
 - mAP50-95: 0.893.
 
 These values describe the current wagon detector experiment. They do not represent final OCR accuracy or final project accuracy.
+
+### Number-region detector result
+
+The Stage 7 number-region detector was trained separately using the 201 training labels and evaluated on 25 validation labels:
+
+- Precision: 0.950.
+- Recall: 0.920.
+- mAP50: 0.977.
+- mAP50-95: 0.675.
+- Training image size: 640.
+- Training batch size: 2.
+- GPU memory reported during training: approximately 0.324 GB.
+
+These results are preliminary because the number-region boxes were generated using a rule-based estimate and still require visual correction.
 
 ### Important current limitation
 
@@ -142,9 +158,9 @@ The number detector is a separate model because the wagon detector finds the com
 
 ### Stage 7: Train the number-region detector
 
-An initial number-region detector experiment was run using the generated number-region labels. Its outputs were saved under the local `runs/` directory, which is intentionally ignored by Git.
+The notebook now contains a separate training and validation cell for the number-region detector. Its outputs are saved under the local `runs/` directory, which is intentionally ignored by Git.
 
-The training code should be organized into the notebook in the next cleanup step. It must use the same low-memory settings as Stage 5:
+The completed run uses the same low-memory settings as Stage 5:
 
 - Lightweight YOLO model.
 - Batch size 1 or 2.
@@ -153,13 +169,26 @@ The training code should be organized into the notebook in the next cleanup step
 - AMP enabled.
 - Image size selected after checking detection quality and VRAM use.
 
+### Stage 8: Crop number regions
+
+The trained number detector was used to process all 252 input images one at a time. It generated 342 number-region crops in the local `Wagon Dataset/number_crops` folder.
+
+This stage keeps only the small detected regions for later restoration and OCR, which reduces memory use on the 4 GB GPU. The crop count can be greater than the image count because an image may contain more than one detected number region.
+
+### Stage 9: Prepare OCR-ready crop variants
+
+Each of the 342 number-region crops was converted to grayscale, enlarged by 3x, lightly smoothed, and thresholded with Otsu's method. The results are stored locally in `Wagon Dataset/ocr_ready`.
+
+This is a baseline preprocessing step, not the final deblurring model. OCR accuracy is not reported yet because real ground-truth wagon numbers have not been added.
+
 ### Later stages
 
 The following work remains:
 
 - Visually inspect and correct number-region boxes.
-- Finalize and document the Stage 7 training cell.
-- Generate reliable number-region crops.
+- Visually inspect and correct the generated number-region boxes, then retrain Stage 7 with corrected labels.
+- Visually inspect the 342 generated number-region crops and remove false detections.
+- Run baseline OCR on the OCR-ready crops and save the raw predictions.
 - Implement the deblurring/restoration model from scratch.
 - Compare the restored crop with the original degraded crop and sharp target.
 - Install and configure Tesseract OCR where required.

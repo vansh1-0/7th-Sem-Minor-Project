@@ -49,7 +49,10 @@ Wagon Dataset/yolo_number/images/
 *.cache
 *.log
 
-# Generated prediction and visualization files
+# Stage 8 crop and future OCR output files
 Wagon Dataset/yolo_annotation_preview.png
 Wagon Dataset/yolo_number/predict/
 Wagon Dataset/yolo_number/runs/
+Wagon Dataset/number_crops/
+Wagon Dataset/ocr_ready/
+Wagon Dataset/ocr_outputs/
