@@ -25,6 +25,10 @@ The project is in active development.
 - Lightweight deblurring CNN trained and evaluated on paired images.
 - Baseline deblurring model applied to all detected number-region crops.
 - Original, OCR-ready, and deblurred crop comparison report generated.
+- Three-way OCR comparison completed with Tesseract.
+- Ground-truth OCR label template created for all detected crops.
+- OCR candidate review file created for human ground-truth verification.
+- Sharp reference crops generated from the paired output images for labeling.
 - GPU and low-VRAM compatibility checks.
 - GitHub documentation and ignore rules.
 
@@ -187,9 +191,7 @@ This is a baseline preprocessing step, not the final deblurring model. OCR accur
 
 ### Stage 10: Run baseline OCR
 
-The notebook now processes all 342 OCR-ready crops and writes predictions to `Wagon Dataset/ocr_baseline.csv`. The current machine does not have the Tesseract application installed, so the current run recorded `tesseract_not_available` for all 342 crops instead of inventing OCR results.
-
-Install the Windows Tesseract application and rerun Stage 10 before using the predictions.
+The notebook processes all 342 OCR-ready crops and writes predictions to `Wagon Dataset/ocr_baseline.csv`. The initial run recorded `tesseract_not_available`, but Tesseract became available for the later Stage 14 comparison.
 
 ### Stage 11: Train and evaluate a lightweight deblurring model
 
@@ -202,7 +204,7 @@ Current baseline result on 25 validation images:
 - Validation SSIM: 0.8519.
 - Model file: local `Wagon Dataset/models/small_deblur_cnn.pt`.
 
-These are baseline restoration results. The model still needs to be applied to the detected number crops and compared against the original degraded crops before final OCR evaluation.
+These are baseline restoration results. The model has since been applied to the detected number crops and compared against the original degraded crops.
 
 ### Stage 12: Apply deblurring to number-region crops
 
@@ -222,6 +224,36 @@ Current average sharpness values:
 
 The OCR-ready value is expected to be much higher because thresholding creates strong edges. These values are diagnostic only and do not prove that the deblurred model is better. Final quality requires aligned sharp number-region targets and OCR evaluation.
 
+### Stage 14: Compare OCR inputs
+
+Tesseract was available during this run, so all 342 original, OCR-ready, and deblurred crops were processed. The output is stored in `Wagon Dataset/ocr_input_comparison.csv`.
+
+Non-empty OCR predictions were returned for:
+
+- Original crops: 20.
+- OCR-ready crops: 22.
+- Deblurred crops: 16.
+
+These counts are not OCR accuracy because ground-truth wagon numbers have not been added. They show that the current baseline deblurring model did not improve the number of non-empty OCR outputs over the simple OCR-ready preprocessing.
+
+### Stage 15: Prepare ground-truth OCR evaluation
+
+The notebook created `Wagon Dataset/number_labels_template.csv` with 342 crop rows and a blank `ground_truth_number` column. Real printed numbers must be entered from the images and the completed file must be saved as `number_labels.csv`.
+
+Only after that file exists will the notebook report exact-match accuracy, character error rate, and valid UIC-number counts for the original, OCR-ready, and deblurred versions.
+
+### Stage 16: Review OCR candidates
+
+The notebook created `Wagon Dataset/number_labels_review.csv` with 342 rows. It contains the original, OCR-ready, and deblurred OCR candidates plus a blank `verified_ground_truth` column.
+
+The real number must be read from each crop image and entered by a person. OCR candidates must not be copied blindly as ground truth.
+
+### Stage 17: Create sharp reference crops for labeling
+
+The blurred number crops were not readable enough for reliable annotation. The notebook now transfers the same detector coordinates to the paired sharp output images and saves 342 clear reference crops in `Wagon Dataset/number_target_crops`.
+
+Use the matching filename from this sharp-reference folder when filling `verified_ground_truth`. These reference crops are generated artifacts and are kept outside GitHub.
+
 ### Later stages
 
 The following work remains:
@@ -229,12 +261,11 @@ The following work remains:
 - Visually inspect and correct number-region boxes.
 - Visually inspect and correct the generated number-region boxes, then retrain Stage 7 with corrected labels.
 - Visually inspect the 342 generated number-region crops and remove false detections.
-- Run baseline OCR on the OCR-ready crops and save the raw predictions.
-- Install Tesseract OCR and rerun Stage 10 to obtain real baseline predictions.
+- Keep the installed Tesseract configuration reproducible for future runs.
 - Compare the restored crop with aligned sharp number-region targets.
-- Install and configure Tesseract OCR where required.
 - Run OCR on original, restored, and target/crop images.
-- Add real ground-truth number labels in `number_labels.csv`.
+- Fill the generated `number_labels_template.csv` and save it as `number_labels.csv`.
+- Review `number_labels_review.csv`, fill `verified_ground_truth`, and use the verified values to create `number_labels.csv`.
 - Measure OCR accuracy, character error rate, and valid UIC-number rate.
 - Test failure cases such as missing detections, unreadable numbers, and false detections.
 - Prepare final plots, tables, conclusions, and presentation material.
