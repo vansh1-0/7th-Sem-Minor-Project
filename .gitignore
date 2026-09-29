@@ -56,3 +56,8 @@ Wagon Dataset/yolo_number/runs/
 Wagon Dataset/number_crops/
 Wagon Dataset/ocr_ready/
 Wagon Dataset/ocr_outputs/
+Wagon Dataset/ocr_baseline.csv
+# Stage 12 restored crop outputs
+Wagon Dataset/deblur_outputs/
+Wagon Dataset/deblur_comparison.csv
+Wagon Dataset/deblur_comparison_preview.png

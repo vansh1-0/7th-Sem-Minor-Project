@@ -21,6 +21,10 @@ The project is in active development.
 - Number-region detector trained separately from the wagon detector.
 - Number-region crops generated for the next restoration and OCR stages.
 - OCR-ready preprocessing generated for all number-region crops.
+- Baseline OCR cell added and tested; Tesseract installation is still required on Windows.
+- Lightweight deblurring CNN trained and evaluated on paired images.
+- Baseline deblurring model applied to all detected number-region crops.
+- Original, OCR-ready, and deblurred crop comparison report generated.
 - GPU and low-VRAM compatibility checks.
 - GitHub documentation and ignore rules.
 
@@ -181,6 +185,43 @@ Each of the 342 number-region crops was converted to grayscale, enlarged by 3x, 
 
 This is a baseline preprocessing step, not the final deblurring model. OCR accuracy is not reported yet because real ground-truth wagon numbers have not been added.
 
+### Stage 10: Run baseline OCR
+
+The notebook now processes all 342 OCR-ready crops and writes predictions to `Wagon Dataset/ocr_baseline.csv`. The current machine does not have the Tesseract application installed, so the current run recorded `tesseract_not_available` for all 342 crops instead of inventing OCR results.
+
+Install the Windows Tesseract application and rerun Stage 10 before using the predictions.
+
+### Stage 11: Train and evaluate a lightweight deblurring model
+
+A small three-convolution CNN was trained from scratch on the paired blurred/sharp images. To fit the RTX 3050 with 4 GB VRAM, images were resized to 256x256, training used batch size 2, one data-loading worker, and 5 epochs.
+
+Current baseline result on 25 validation images:
+
+- Final training L1 loss: 0.039804.
+- Validation PSNR: 25.907.
+- Validation SSIM: 0.8519.
+- Model file: local `Wagon Dataset/models/small_deblur_cnn.pt`.
+
+These are baseline restoration results. The model still needs to be applied to the detected number crops and compared against the original degraded crops before final OCR evaluation.
+
+### Stage 12: Apply deblurring to number-region crops
+
+The Stage 11 baseline model was applied to all 342 detected number-region crops one at a time. The restored crops were saved locally in `Wagon Dataset/deblur_outputs` with their original crop dimensions preserved.
+
+This output is ready for visual comparison and later OCR testing. It is not yet the final deblurring model result.
+
+### Stage 13: Compare crop versions
+
+All 342 original, OCR-ready, and deblurred crops were compared. The report uses Laplacian sharpness and mean pixel change, plus a six-sample visual contact sheet.
+
+Current average sharpness values:
+
+- Original crops: 57.6086.
+- OCR-ready crops: 2490.6267.
+- Deblurred crops: 57.5158.
+
+The OCR-ready value is expected to be much higher because thresholding creates strong edges. These values are diagnostic only and do not prove that the deblurred model is better. Final quality requires aligned sharp number-region targets and OCR evaluation.
+
 ### Later stages
 
 The following work remains:
@@ -189,8 +230,8 @@ The following work remains:
 - Visually inspect and correct the generated number-region boxes, then retrain Stage 7 with corrected labels.
 - Visually inspect the 342 generated number-region crops and remove false detections.
 - Run baseline OCR on the OCR-ready crops and save the raw predictions.
-- Implement the deblurring/restoration model from scratch.
-- Compare the restored crop with the original degraded crop and sharp target.
+- Install Tesseract OCR and rerun Stage 10 to obtain real baseline predictions.
+- Compare the restored crop with aligned sharp number-region targets.
 - Install and configure Tesseract OCR where required.
 - Run OCR on original, restored, and target/crop images.
 - Add real ground-truth number labels in `number_labels.csv`.
