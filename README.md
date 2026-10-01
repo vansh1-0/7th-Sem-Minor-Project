@@ -6,7 +6,16 @@ The project is being developed as a staged pipeline so that every part can be te
 
 ## Project Status
 
-The project is in active development.
+The project is in active development. The detection, crop, restoration baseline, OCR comparison, and manual-label workflow are implemented. Final OCR quality is not yet acceptable.
+
+### Current Next Task
+
+The manual labeling work is complete for the available readable crops. The current files are:
+
+- `Wagon Dataset/number_labels.csv`: 162 verified ground-truth labels used for evaluation.
+- `Wagon Dataset/number_labels_review.csv`: review record containing verified, unreadable, and invalid-crop decisions.
+
+The next technical task is to regenerate the missing `image_88_region_01.png` OCR row, rerun the evaluation, and then improve the number-region boxes and deblurring baseline.
 
 ### Completed
 
@@ -21,7 +30,7 @@ The project is in active development.
 - Number-region detector trained separately from the wagon detector.
 - Number-region crops generated for the next restoration and OCR stages.
 - OCR-ready preprocessing generated for all number-region crops.
-- Baseline OCR cell added and tested; Tesseract installation is still required on Windows.
+- Baseline OCR cell added and tested with Tesseract.
 - Lightweight deblurring CNN trained and evaluated on paired images.
 - Baseline deblurring model applied to all detected number-region crops.
 - Original, OCR-ready, and deblurred crop comparison report generated.
@@ -29,6 +38,7 @@ The project is in active development.
 - Ground-truth OCR label template created for all detected crops.
 - OCR candidate review file created for human ground-truth verification.
 - Sharp reference crops generated from the paired output images for labeling.
+- Ground-truth labels completed for 162 manually verified crops.
 - GPU and low-VRAM compatibility checks.
 - GitHub documentation and ignore rules.
 
@@ -73,7 +83,7 @@ These results are preliminary because the number-region boxes were generated usi
 
 The number-region boxes were initially generated as rule-based boxes inside the wagon boxes. They are useful for building the second detector pipeline, but they must be visually checked and improved before reporting final number-detection or OCR results.
 
-The CNN deblurring prototype was intentionally removed from the notebook. The restoration model will be designed and implemented in a later stage from scratch.
+The current CNN is a small restoration baseline, not the final deblurring model. A stronger crop-focused restoration model is still required.
 
 ## Pipeline Overview
 
@@ -191,7 +201,7 @@ This is a baseline preprocessing step, not the final deblurring model. OCR accur
 
 ### Stage 10: Run baseline OCR
 
-The notebook processes all 342 OCR-ready crops and writes predictions to `Wagon Dataset/ocr_baseline.csv`. The initial run recorded `tesseract_not_available`, but Tesseract became available for the later Stage 14 comparison.
+The notebook processed 342 OCR-ready crops in the experiment run and wrote predictions to `Wagon Dataset/ocr_baseline.csv`. Generated OCR outputs were later cleaned from the workspace and can be regenerated.
 
 ### Stage 11: Train and evaluate a lightweight deblurring model
 
@@ -238,19 +248,26 @@ These counts are not OCR accuracy because ground-truth wagon numbers have not be
 
 ### Stage 15: Prepare ground-truth OCR evaluation
 
-The notebook created `Wagon Dataset/number_labels_template.csv` with 342 crop rows and a blank `ground_truth_number` column. Real printed numbers must be entered from the images and the completed file must be saved as `number_labels.csv`.
+The verified file now exists and contains 162 rows. The current OCR comparison matched 161 of them; `image_88_region_01.png` has a verified label but is absent from the saved OCR comparison and is excluded until it is regenerated.
 
-Only after that file exists will the notebook report exact-match accuracy, character error rate, and valid UIC-number counts for the original, OCR-ready, and deblurred versions.
+Current evaluation on the 161 matched rows:
+
+- Original exact-match accuracy: 0.0.
+- OCR-ready exact-match accuracy: 0.0.
+- Deblurred exact-match accuracy: 0.0.
+- Original, OCR-ready, and deblurred valid UIC predictions: 0.
+
+These results show that the current OCR and deblurring baselines are not yet accurate enough for final recognition.
 
 ### Stage 16: Review OCR candidates
 
-The notebook created `Wagon Dataset/number_labels_review.csv` with 342 rows. It contains the original, OCR-ready, and deblurred OCR candidates plus a blank `verified_ground_truth` column.
+The notebook created `Wagon Dataset/number_labels_review.csv` during the review workflow. It contains OCR candidates plus the manual `verified_ground_truth` and `review_status` decisions.
 
-The real number must be read from each crop image and entered by a person. OCR candidates must not be copied blindly as ground truth.
+The real numbers were read from the sharp reference crops and entered by a person. OCR candidates must not be copied blindly as ground truth.
 
 ### Stage 17: Create sharp reference crops for labeling
 
-The blurred number crops were not readable enough for reliable annotation. The notebook now transfers the same detector coordinates to the paired sharp output images and saves 342 clear reference crops in `Wagon Dataset/number_target_crops`.
+The blurred number crops were not readable enough for reliable annotation. The notebook can transfer the same detector coordinates to the paired sharp output images and generate clear reference crops in `Wagon Dataset/number_target_crops`. Those generated crops were cleaned after labeling and are not currently present.
 
 Use the matching filename from this sharp-reference folder when filling `verified_ground_truth`. These reference crops are generated artifacts and are kept outside GitHub.
 
@@ -258,14 +275,11 @@ Use the matching filename from this sharp-reference folder when filling `verifie
 
 The following work remains:
 
-- Visually inspect and correct number-region boxes.
-- Visually inspect and correct the generated number-region boxes, then retrain Stage 7 with corrected labels.
-- Visually inspect the 342 generated number-region crops and remove false detections.
-- Keep the installed Tesseract configuration reproducible for future runs.
-- Compare the restored crop with aligned sharp number-region targets.
-- Run OCR on original, restored, and target/crop images.
-- Fill the generated `number_labels_template.csv` and save it as `number_labels.csv`.
-- Review `number_labels_review.csv`, fill `verified_ground_truth`, and use the verified values to create `number_labels.csv`.
+- Regenerate the missing `image_88_region_01.png` crop and OCR-comparison row.
+- Improve and manually verify the number-region boxes, then retrain Stage 7 with corrected labels.
+- Improve the small deblurring CNN using crop-focused training while respecting the 4 GB VRAM limit.
+- Regenerate OCR inputs and compare original, OCR-ready, and improved deblurred crops.
+- Rerun OCR and evaluate exact accuracy, CER, and UIC validity on the verified labels.
 - Measure OCR accuracy, character error rate, and valid UIC-number rate.
 - Test failure cases such as missing detections, unreadable numbers, and false detections.
 - Prepare final plots, tables, conclusions, and presentation material.
@@ -286,6 +300,8 @@ Minor Project/
 |   |-- validation_pairs.csv          # Validation manifest
 |   |-- test_pairs.csv                # Test manifest
 |   |-- wagon_annotations_template.csv
+|   |-- number_labels.csv           # 162 verified OCR ground-truth rows
+|   |-- number_labels_review.csv    # Manual review decisions and OCR candidates
 |   |-- yolo_wagon/                    # Wagon detector config and labels
 |   |-- yolo_number/                   # Number detector config and labels
 |   |-- input/                         # Local degraded images, ignored by Git
@@ -297,6 +313,8 @@ Minor Project/
 ```
 
 Large image files, trained weights, prediction crops, and experiment logs are ignored so the GitHub repository remains manageable. The dataset should be shared separately or downloaded from the agreed project source.
+
+The local workspace was cleaned after the current experiments. Generated crops, duplicate YOLO image copies, model outputs, previews, and experiment reports were removed; they can be regenerated by rerunning the relevant notebook stages. Source images, sharp targets, labels, manifests, and verified OCR labels were preserved.
 
 ## Setup
 
