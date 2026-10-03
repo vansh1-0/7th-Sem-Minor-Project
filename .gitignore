@@ -68,3 +68,17 @@ Wagon Dataset/deblur_outputs/
 Wagon Dataset/crop_deblur_outputs/
 Wagon Dataset/deblur_comparison.csv
 Wagon Dataset/deblur_comparison_preview.png
+
+# Staged evaluation and restoration-comparison outputs
+Wagon Dataset/evaluation_failure_audit.csv
+Wagon Dataset/evaluation_failure_audit_summary.csv
+Wagon Dataset/evaluation_mapping_repairs.csv
+Wagon Dataset/evaluation_mapping_summary.csv
+Wagon Dataset/number_labels_stage27_repaired.csv
+Wagon Dataset/cpu_preprocessing_baseline.csv
+Wagon Dataset/cpu_preprocessing_summary.csv
+Wagon Dataset/crop_deblur_stage29_validation.csv
+Wagon Dataset/restoration_comparison.csv
+Wagon Dataset/restoration_comparison_summary.csv
+Wagon Dataset/ocr_stage31_candidates.csv
+Wagon Dataset/ocr_stage31_summary.csv

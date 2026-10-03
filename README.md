@@ -35,6 +35,8 @@ The main implementation is the Jupyter notebook [wagon_deblurring_pipeline.ipynb
 | Crop-mapping integrity audit | Completed |
 | CPU preprocessing benchmark | Completed |
 | Crop-restoration holdout validation | Completed |
+| Restoration-output comparison | Completed |
+| OCR configuration and rejection benchmark | Completed |
 | Manual ground-truth review | Completed for available readable crops |
 | Variable-length OCR evaluation | Completed |
 | Multi-configuration OCR evaluation | Completed |
@@ -48,6 +50,8 @@ The latest documented checkpoint is complete through evaluation auditing, crop-m
 - Exact full-number accuracy is `0.0` for all tested OCR versions.
 - Crop-focused deblurring lowers CER only marginally.
 - The Stage 29 checkpoint loads strictly and runs on the CUDA device within the laptop memory budget.
+- Stage 30 increases non-empty OCR output slightly but reduces image similarity and produces no exact matches.
+- Stage 31 confirms that the tested OCR candidates are too low-confidence to accept safely.
 - The number-region boxes still need visual correction.
 - The current CNN is a validated baseline, not a final deblurring model.
 
@@ -504,9 +508,69 @@ Stage 29 validates the existing `CropDeblurCNN` checkpoint without retraining. I
 
 The validation completed successfully and stayed well below the 4 GB VRAM constraint. These metrics establish that the checkpoint is loadable and operational; they do not prove that restoration improves OCR. OCR impact must be measured separately in Stage 30.
 
-Generated artifact:
+### Stage 30: Compare restoration outputs
 
-- `Wagon Dataset/crop_deblur_stage29_validation.csv`
+Stage 30 compares the original crop with the output of the validated crop-focused restoration checkpoint. It evaluates both image similarity against the sharp target and OCR behavior on the same `161` valid mapped samples.
+
+| Version | Non-empty OCR | Exact matches | Mean L1 | Mean PSNR | Mean SSIM |
+|---|---:|---:|---:|---:|---:|
+| Original | 4/161 | 0 | 0.017155 | 29.713947 | 0.874223 |
+| Restored | 7/161 | 0 | 0.028422 | 27.737085 | 0.860670 |
+
+Interpretation:
+
+- Restoration increased non-empty OCR output from `4` to `7` samples.
+- Restoration produced `0` exact OCR matches, the same as the original crops.
+- Restoration reduced average PSNR by `1.976862` and average SSIM by `0.013553`.
+- The current checkpoint therefore does not yet justify replacing the original crop for recognition. It may make more OCR attempts return text, but the output is not more accurate and is visually farther from the sharp target on average.
+
+Generated artifacts:
+
+- `Wagon Dataset/restoration_comparison.csv`
+- `Wagon Dataset/restoration_comparison_summary.csv`
+
+### Stage 31: Tune OCR and rejection rules
+
+Stage 31 evaluates six controlled Tesseract configurations on the same `161` valid crops:
+
+- Original crop with PSM 6.
+- Original crop with PSM 7.
+- Denoised crop with PSM 6.
+- Denoised crop with PSM 7.
+- Otsu-thresholded crop with PSM 6.
+- Otsu-thresholded crop with PSM 7.
+
+Each candidate records the prediction, mean token confidence, whether confidence data was available, non-empty status, exact-match status, and whether it passed the conservative rejection rule:
+
+```text
+non-empty prediction
+AND mean confidence >= 35
+AND predicted length between 4 and 12 digits
+```
+
+Results:
+
+| Variant | PSM | Non-empty | Non-empty rate | Accepted | Exact matches | Mean confidence |
+|---|---:|---:|---:|---:|---:|---:|
+| Original | 6 | 11/161 | 6.83% | 0 | 0 | 1.381 |
+| Original | 7 | 4/161 | 2.48% | 0 | 0 | 0.503 |
+| Denoised | 6 | 23/161 | 14.29% | 0 | 0 | 2.935 |
+| Denoised | 7 | 16/161 | 9.94% | 0 | 0 | 0.981 |
+| Otsu | 6 | 26/161 | 16.15% | 0 | 0 | 3.141 |
+| Otsu | 7 | 13/161 | 8.07% | 0 | 0 | 1.130 |
+
+Interpretation:
+
+- Otsu with PSM 6 produced the most non-empty outputs: `26/161`.
+- No configuration produced an exact match.
+- No candidate passed the confidence-based rejection rule.
+- The low confidence values indicate that returned OCR strings are not trustworthy enough to expose as accepted wagon numbers.
+- The rejection rule is behaving conservatively and prevents low-confidence guesses from being treated as valid results.
+
+Generated artifacts:
+
+- `Wagon Dataset/ocr_stage31_candidates.csv`
+- `Wagon Dataset/ocr_stage31_summary.csv`
 
 ## 9. Evaluation definitions
 
@@ -596,6 +660,8 @@ Run the notebook cells in order for a full experiment:
 21. Run the Stage 27 crop-mapping integrity audit.
 22. Run the Stage 28 CPU preprocessing benchmark.
 23. Run Stage 29 checkpoint validation.
+24. Run Stage 30 restoration-output comparison.
+25. Run Stage 31 OCR configuration and rejection benchmark.
 
 For evaluation-only work, use the later readiness/regeneration stages after confirming that detector weights, source images, and verified labels are present.
 
@@ -624,6 +690,8 @@ For evaluation-only work, use the later readiness/regeneration stages after conf
 - Added the Stage 27 conservative crop-mapping audit and repaired-label copy.
 - Added the Stage 28 CPU preprocessing benchmark with per-variant OCR metrics.
 - Added Stage 29 strict checkpoint loading, holdout PSNR/SSIM/L1 validation, and GPU-memory reporting.
+- Added Stage 30 comparison of original and restored crops using image metrics and OCR outcomes.
+- Added Stage 31 confidence-aware OCR candidates and conservative rejection evaluation.
 - Removed duplicate notebook setup and helper definitions for export.
 
 ## 13. Known limitations
@@ -664,11 +732,11 @@ Only 162 rows were manually reviewed, and 161 matched the comparison file in the
 
 The validated crop-restoration checkpoint achieves mean holdout PSNR `29.340015` and SSIM `0.883002`, but image similarity does not guarantee character preservation or better recognition. The preliminary restoration comparison showed lower average PSNR/SSIM than the original crops while increasing non-empty OCR output. Stage 30 must therefore compare restoration and OCR together before the model is retained.
 
-### 13.9 Generated artifacts are not portable
+### 13.10 Generated artifacts are not portable
 
 Input images, target images, model weights, YOLO runs, crops, OCR outputs, and previews are ignored or generated locally. Another machine must recreate them using the same source data and compatible model versions.
 
-### 13.10 Tesseract is not specialized for this task
+### 13.11 Tesseract is not specialized for this task
 
 Tesseract with two page modes is a low-cost baseline. It is sensitive to crop quality, text orientation, font, contrast, blur, and character spacing. It is not a substitute for a trained text detector/recognizer.
 
@@ -692,7 +760,7 @@ The following items are required before calling the project complete or export-r
 4. Confirm that the wagon detector does not leak images between splits.
 5. Save the exact model configuration and package versions used for the reported run.
 
-### Priority 3: Build a crop-focused restoration model
+### Priority 3: Improve or replace the crop-focused restoration model
 
 1. Reconfirm the existing `342` blurred/sharp pairs after number-region annotations are corrected.
 2. Increase training duration with early stopping or a validation-based checkpoint.
@@ -700,6 +768,7 @@ The following items are required before calling the project complete or export-r
 4. Add realistic blur, noise, brightness, contrast, and perspective augmentation.
 5. Measure crop PSNR and SSIM on held-out target crops.
 6. Evaluate character preservation and OCR impact, not only visual sharpness.
+7. Use the original crop as the default recognition input unless a later model improves exact match or CER on the frozen evaluation set.
 
 ### Priority 4: Improve text recognition
 
@@ -709,6 +778,7 @@ The following items are required before calling the project complete or export-r
 4. Keep all candidate predictions and confidence values.
 5. Add rejection logic for low-confidence or structurally invalid predictions.
 6. Do not use checksum rules to overwrite OCR predictions.
+7. Calibrate the confidence threshold using a larger verified set before exposing accepted predictions.
 
 ### Priority 5: Expand and isolate evaluation data
 
@@ -747,9 +817,10 @@ The next experiment should not be another OCR configuration sweep. The highest-v
 1. Correct a representative batch of number-region boxes.
 2. Retrain the number detector.
 3. Visually inspect regenerated crops.
-4. Train the crop-focused restoration baseline on corrected pairs.
+4. Improve or replace the crop-focused restoration baseline on corrected pairs.
 5. Evaluate a small set of preprocessing variants.
 6. Measure results on a held-out verified subset.
+7. Retain restoration only if it improves recognition metrics, not merely non-empty OCR count.
 
 This isolates whether the main failure is caused by incorrect localization, insufficient restoration, or OCR limitations. Without that isolation, additional model changes will not produce a reliable conclusion.
 
