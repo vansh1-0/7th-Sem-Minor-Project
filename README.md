@@ -13,55 +13,96 @@ The project is in active development. The detection, crop, restoration baseline,
 The manual labeling work is complete for the available readable crops. The current files are:
 
 - `Wagon Dataset/number_labels.csv`: 162 verified ground-truth labels used for evaluation.
+- `Wagon Dataset/number_labels_aligned.csv`: verified labels sorted and validated by `crop_file`.
 - `Wagon Dataset/number_labels_review.csv`: review record containing verified, unreadable, and invalid-crop decisions.
 
-The next technical task is to regenerate the missing `image_88_region_01.png` OCR row, rerun the evaluation, and then improve the number-region boxes and deblurring baseline.
+The regeneration step is complete. The next technical task is to improve the number-region boxes and deblurring baseline.
+
+Stage 18 created `number_labels_aligned.csv` using `crop_file` keys, so later evaluation must use this aligned file rather than CSV row positions.
+
+Stage 19 added a CPU-only readiness check. It confirms that aligned labels and verified labels are available, detects that the number-detector weights are still available, and reports that generated OCR comparison files must be recreated. No model training is required for that regeneration step.
+
+### Stage 20: Regenerate evaluation crops and OCR
+
+Existing number-detector weights were reused without retraining. The notebook regenerated 342 number crops and 342 OCR comparison rows using one-image-at-a-time inference. CPU preprocessing and Tesseract OCR were then applied. The deblurred columns remain unavailable until the restoration model is rebuilt.
+
+### Stage 21: Train a crop-focused deblurring baseline
+
+The existing detector was reused to create 342 matching sharp target crops. A small CNN was trained directly on blurred number crops and sharp target crops for 3 epochs with batch size 2. Final crop-training L1 loss was 0.032742. The model is saved locally as `Wagon Dataset/models/crop_deblur_cnn.pt` and is excluded from GitHub.
+
+### Stage 22: Apply crop deblurring and compare OCR
+
+The crop-focused model was applied to all 342 regenerated crops and OCR was rerun. On the 161 matched verified labels:
+
+- Original exact-match accuracy: 0.0.
+- OCR-ready exact-match accuracy: 0.0.
+- Crop-deblurred exact-match accuracy: 0.0.
+- OCR-ready CER: 0.995277.
+- Crop-deblurred CER: 0.993506.
+- Valid UIC predictions: 0 for all versions.
+
+The crop-focused model gives a small CER improvement but does not yet produce correct full-number OCR results.
+
+### Stage 24: Test low-cost multi-configuration OCR
+
+Two Tesseract page modes were tested on the 162 aligned verified crops only. No GPU or model training was used.
+
+### Stage 25: Evaluate multi-configuration OCR
+
+The selected multi-mode OCR results produced:
+
+- Original: 19 non-empty predictions, CER 0.991202, exact accuracy 0.0.
+- OCR-ready: 26 non-empty predictions, CER 0.987683, exact accuracy 0.0.
+- Crop-deblurred: 20 non-empty predictions, CER 0.991202, exact accuracy 0.0.
+
+Multi-mode OCR improves the number of non-empty outputs and slightly lowers CER, but it still does not recover complete wagon numbers.
+
+### Final checkpoint
+
+The current project checkpoint is complete through crop-focused restoration and variable-length OCR evaluation. Exact full-number accuracy remains 0.0, while crop-focused deblurring slightly improves CER to 0.993506. The pipeline is functional and measured, but it is not yet a high-accuracy recognition system.
+
+### Stage 23: Evaluate variable-length wagon numbers
+
+The dataset is not fixed at 12 digits. Among the 161 matched verified labels, the ground-truth lengths are:
+
+- 11 digits: 123 labels.
+- 10 digits: 21 labels.
+- 9 digits: 8 labels.
+- 4, 5, 6, and 8 digits: 2 labels each.
+- 12 digits: 2 labels.
+
+The new evaluator reports exact match, CER, non-empty predictions, and the number of predictions with 11 or fewer digits. The fixed 12-digit UIC checksum is not used as the primary metric.
+
+Current variable-length results:
+
+- Original non-empty predictions: 10/161.
+- OCR-ready non-empty predictions: 9/161.
+- Crop-deblurred non-empty predictions: 13/161.
+- Exact-match accuracy: 0.0 for all three versions.
 
 ### Completed
 
-- Dataset inspection and input/output pairing.
-- Reproducible train, validation, and test metadata generation.
-- Image-size and missing-pair checks.
-- YOLO wagon annotation folder setup.
-- Wagon label integration and validation.
-- Wagon detector training and validation using a lightweight YOLOv8n model.
-- Number-region dataset folder setup.
-- Initial number-region boxes generated from the validated wagon boxes.
-- Number-region detector trained separately from the wagon detector.
-- Number-region crops generated for the next restoration and OCR stages.
-- OCR-ready preprocessing generated for all number-region crops.
-- Baseline OCR cell added and tested with Tesseract.
-- Lightweight deblurring CNN trained and evaluated on paired images.
-- Baseline deblurring model applied to all detected number-region crops.
-- Original, OCR-ready, and deblurred crop comparison report generated.
-- Three-way OCR comparison completed with Tesseract.
-- Ground-truth OCR label template created for all detected crops.
-- OCR candidate review file created for human ground-truth verification.
-- Sharp reference crops generated from the paired output images for labeling.
-- Ground-truth labels completed for 162 manually verified crops.
-- GPU and low-VRAM compatibility checks.
-- GitHub documentation and ignore rules.
+- Dataset pairing and validation for 252 input/target pairs.
+- Wagon and number-region YOLO detector setup, training, and validation.
+- Number crop generation, OCR preprocessing, and Tesseract comparison.
+- Baseline and crop-focused deblurring CNNs.
+- Manual verification and key-aligned ground-truth labels for 162 readable crops.
+- Variable-length OCR and multi-configuration OCR evaluation.
 
 ### Current measurable data
 
-- Paired input images: 252.
-- Paired target images: 252.
-- Wagon training labels: 232.
-- Wagon validation labels: 20.
-- Number-region training labels: 201.
-- Number-region validation labels: 25.
-- GPU: NVIDIA GeForce RTX 3050 Laptop GPU.
-- Available VRAM: 4 GB.
-- CUDA: available through PyTorch.
+- Input/target pairs: 252/252.
+- Wagon labels: 232 train and 20 validation.
+- Number-region labels: 201 train and 25 validation.
+- Verified OCR labels: 162.
+- Unreadable review rows: 117.
+- Invalid-crop review rows: 64.
+- GPU: NVIDIA RTX 3050 Laptop GPU with 4 GB VRAM.
 
 ### Wagon detector result
 
 The wagon detector validation run produced the following result:
 
-- Precision: 0.997.
-- Recall: 1.000.
-- mAP50: 0.995.
-- mAP50-95: 0.893.
 
 These values describe the current wagon detector experiment. They do not represent final OCR accuracy or final project accuracy.
 
@@ -69,13 +110,6 @@ These values describe the current wagon detector experiment. They do not represe
 
 The Stage 7 number-region detector was trained separately using the 201 training labels and evaluated on 25 validation labels:
 
-- Precision: 0.950.
-- Recall: 0.920.
-- mAP50: 0.977.
-- mAP50-95: 0.675.
-- Training image size: 640.
-- Training batch size: 2.
-- GPU memory reported during training: approximately 0.324 GB.
 
 These results are preliminary because the number-region boxes were generated using a rule-based estimate and still require visual correction.
 
@@ -89,13 +123,6 @@ The current CNN is a small restoration baseline, not the final deblurring model.
 
 ```text
 Blurred wagon image
-        |
-        v
-1. Dataset validation and pairing
-        |
-        v
-2. Wagon detector
-   Finds the complete wagon area
         |
         v
 3. Number-region detector
@@ -113,7 +140,7 @@ Blurred wagon image
         |
         v
 7. Validation and evaluation
-   UIC checksum, OCR accuracy, CER, PSNR, and SSIM
+        OCR accuracy, CER, PSNR, and SSIM
 ```
 
 ## Stages
@@ -257,7 +284,7 @@ Current evaluation on the 161 matched rows:
 - Deblurred exact-match accuracy: 0.0.
 - Original, OCR-ready, and deblurred valid UIC predictions: 0.
 
-These results show that the current OCR and deblurring baselines are not yet accurate enough for final recognition.
+These results show that the current OCR baseline is not yet accurate enough for final recognition. The deblurred score is not a valid model result in this run because the deblurring model was intentionally not regenerated.
 
 ### Stage 16: Review OCR candidates
 
@@ -271,18 +298,13 @@ The blurred number crops were not readable enough for reliable annotation. The n
 
 Use the matching filename from this sharp-reference folder when filling `verified_ground_truth`. These reference crops are generated artifacts and are kept outside GitHub.
 
-### Later stages
+### Optional future improvements
 
-The following work remains:
-
-- Regenerate the missing `image_88_region_01.png` crop and OCR-comparison row.
 - Improve and manually verify the number-region boxes, then retrain Stage 7 with corrected labels.
-- Improve the small deblurring CNN using crop-focused training while respecting the 4 GB VRAM limit.
-- Regenerate OCR inputs and compare original, OCR-ready, and improved deblurred crops.
-- Rerun OCR and evaluate exact accuracy, CER, and UIC validity on the verified labels.
-- Measure OCR accuracy, character error rate, and valid UIC-number rate.
-- Test failure cases such as missing detections, unreadable numbers, and false detections.
-- Prepare final plots, tables, conclusions, and presentation material.
+- Train the crop-focused deblurring model for more epochs while respecting the 4 GB VRAM limit.
+- Test stronger OCR preprocessing or a dedicated OCR model.
+- Add more readable labeled samples if available.
+- Test failure cases such as missing detections and false detections.
 
 ## Repository Structure
 
@@ -301,6 +323,7 @@ Minor Project/
 |   |-- test_pairs.csv                # Test manifest
 |   |-- wagon_annotations_template.csv
 |   |-- number_labels.csv           # 162 verified OCR ground-truth rows
+|   |-- number_labels_aligned.csv   # Key-aligned verified labels
 |   |-- number_labels_review.csv    # Manual review decisions and OCR candidates
 |   |-- yolo_wagon/                    # Wagon detector config and labels
 |   |-- yolo_number/                   # Number detector config and labels

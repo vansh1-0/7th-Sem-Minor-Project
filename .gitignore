@@ -58,11 +58,13 @@ Wagon Dataset/ocr_ready/
 Wagon Dataset/ocr_outputs/
 Wagon Dataset/ocr_baseline.csv
 Wagon Dataset/ocr_input_comparison.csv
+Wagon Dataset/ocr_multiconfig_verified.csv
 # Ground-truth label CSV files are intentionally kept for reproducible evaluation.
 # OCR candidate review CSV is also kept for team annotation work.
 # Sharp reference images are generated locally and kept outside GitHub.
 Wagon Dataset/number_target_crops/
 # Stage 12 restored crop outputs
 Wagon Dataset/deblur_outputs/
+Wagon Dataset/crop_deblur_outputs/
 Wagon Dataset/deblur_comparison.csv
 Wagon Dataset/deblur_comparison_preview.png
