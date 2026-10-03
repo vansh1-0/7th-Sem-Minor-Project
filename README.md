@@ -30,7 +30,11 @@ The main implementation is the Jupyter notebook [wagon_deblurring_pipeline.ipynb
 | OCR preprocessing | Implemented |
 | Baseline OCR comparison | Completed |
 | Full-image deblurring baseline | Completed |
-| Crop-focused deblurring baseline | Completed |
+| Crop-focused deblurring baseline | Completed and validated |
+| Existing evaluation-set audit | Completed |
+| Crop-mapping integrity audit | Completed |
+| CPU preprocessing benchmark | Completed |
+| Crop-restoration holdout validation | Completed |
 | Manual ground-truth review | Completed for available readable crops |
 | Variable-length OCR evaluation | Completed |
 | Multi-configuration OCR evaluation | Completed |
@@ -39,12 +43,13 @@ The main implementation is the Jupyter notebook [wagon_deblurring_pipeline.ipynb
 
 ### Current checkpoint
 
-The latest documented checkpoint is complete through crop-focused restoration, variable-length evaluation, and low-cost multi-configuration OCR. The most important result is:
+The latest documented checkpoint is complete through evaluation auditing, crop-mapping validation, CPU preprocessing, crop-focused restoration validation, variable-length evaluation, and low-cost multi-configuration OCR. The most important results are:
 
 - Exact full-number accuracy is `0.0` for all tested OCR versions.
 - Crop-focused deblurring lowers CER only marginally.
+- The Stage 29 checkpoint loads strictly and runs on the CUDA device within the laptop memory budget.
 - The number-region boxes still need visual correction.
-- The current CNN is a baseline and must not be presented as a final deblurring model.
+- The current CNN is a validated baseline, not a final deblurring model.
 
 ## 3. Hardware and runtime assumptions
 
@@ -422,6 +427,87 @@ Recorded results:
 
 Multi-mode OCR produces more non-empty strings and a slight CER improvement, but it still does not recover complete wagon numbers.
 
+### Stage 26: Audit the existing evaluation set
+
+Stage 26 freezes a failure-analysis baseline using only existing verified labels, OCR comparison rows, number crops, and sharp reference crops. It does not train a model or install packages.
+
+The audit covered `162` verified labels:
+
+| Failure category | Samples |
+|---|---:|
+| Empty OCR output | 134 |
+| Non-matching OCR output | 27 |
+| Missing input crop | 1 |
+| Exact match available | 0 |
+
+Generated artifacts:
+
+- `Wagon Dataset/evaluation_failure_audit.csv`
+- `Wagon Dataset/evaluation_failure_audit_summary.csv`
+
+### Stage 27: Repair existing crop mappings
+
+Stage 27 checks label keys against local blurred crops, sharp target crops, and OCR comparison rows. It proposes a filename repair only when normalized matching produces one unambiguous local candidate. No image content or original label file is overwritten.
+
+Results:
+
+- `161` exact mappings.
+- `1` unresolved missing crop: `image_88_region_01.png`.
+- `0` unsafe automatic filename repairs.
+
+Generated artifacts:
+
+- `Wagon Dataset/evaluation_mapping_repairs.csv`
+- `Wagon Dataset/evaluation_mapping_summary.csv`
+- `Wagon Dataset/number_labels_stage27_repaired.csv`
+
+### Stage 28: Establish a CPU preprocessing baseline
+
+Stage 28 evaluates six controlled preprocessing variants on the `161` valid mapped samples. Original crops are not modified, and processing runs on CPU before Tesseract OCR.
+
+| Variant | Non-empty outputs | Non-empty rate | Exact matches | Mean CER |
+|---|---:|---:|---:|---:|
+| Denoised | 16/161 | 9.94% | 0 | 0.992603 |
+| Otsu | 13/161 | 8.07% | 0 | 0.992076 |
+| Grayscale | 8/161 | 4.97% | 0 | 0.995426 |
+| CLAHE | 6/161 | 3.73% | 0 | 0.996612 |
+| Adaptive morphology | 1/161 | 0.62% | 0 | 0.999435 |
+| Adaptive thresholding | 0/161 | 0.00% | 0 | 1.000000 |
+
+Denoising is the strongest tested option by non-empty OCR rate, but no tested preprocessing method produced an exact match.
+
+Generated artifacts:
+
+- `Wagon Dataset/cpu_preprocessing_baseline.csv`
+- `Wagon Dataset/cpu_preprocessing_summary.csv`
+
+### Stage 29: Validate the crop-focused restoration checkpoint
+
+Stage 29 validates the existing `CropDeblurCNN` checkpoint without retraining. It uses strict state-dict loading, deterministic holdout inference, image-quality metrics, and GPU-memory measurement.
+
+| Metric | Result |
+|---|---:|
+| Device | CUDA |
+| Paired crops | 342 |
+| Missing targets | 0 |
+| Missing inputs | 0 |
+| Holdout crops | 69 |
+| Input size | 256 x 256 |
+| Training batch size | 2 |
+| Training epochs | 3 |
+| Model parameters | 3,203 |
+| Checkpoint size | 15,704 bytes |
+| Mean holdout L1 | 0.022020 |
+| Mean holdout PSNR | 29.340015 |
+| Mean holdout SSIM | 0.883002 |
+| Peak GPU memory | 11.02 MB |
+
+The validation completed successfully and stayed well below the 4 GB VRAM constraint. These metrics establish that the checkpoint is loadable and operational; they do not prove that restoration improves OCR. OCR impact must be measured separately in Stage 30.
+
+Generated artifact:
+
+- `Wagon Dataset/crop_deblur_stage29_validation.csv`
+
 ## 9. Evaluation definitions
 
 ### Exact-match accuracy
@@ -506,6 +592,10 @@ Run the notebook cells in order for a full experiment:
 17. Train the crop-focused deblurring baseline.
 18. Apply crop deblurring.
 19. Run variable-length and multi-configuration OCR evaluation.
+20. Run the Stage 26 evaluation failure audit.
+21. Run the Stage 27 crop-mapping integrity audit.
+22. Run the Stage 28 CPU preprocessing benchmark.
+23. Run Stage 29 checkpoint validation.
 
 For evaluation-only work, use the later readiness/regeneration stages after confirming that detector weights, source images, and verified labels are present.
 
@@ -530,6 +620,10 @@ For evaluation-only work, use the later readiness/regeneration stages after conf
 - Added key-aligned ground-truth evaluation.
 - Added variable-length number evaluation.
 - Added multi-configuration OCR evaluation.
+- Added the Stage 26 frozen evaluation failure audit.
+- Added the Stage 27 conservative crop-mapping audit and repaired-label copy.
+- Added the Stage 28 CPU preprocessing benchmark with per-variant OCR metrics.
+- Added Stage 29 strict checkpoint loading, holdout PSNR/SSIM/L1 validation, and GPU-memory reporting.
 - Removed duplicate notebook setup and helper definitions for export.
 
 ## 13. Known limitations
@@ -548,7 +642,7 @@ Exact-match accuracy is zero across all tested versions. Most crops produce no u
 
 ### 13.4 The deblurring model is too small
 
-The CNN is a three-convolution baseline trained for very few epochs. It does not model realistic motion blur, text structure, illumination variation, or detector-coordinate uncertainty.
+The CNN is a three-convolution baseline trained for only three epochs. Stage 29 confirms that it loads and runs correctly, but it does not model realistic motion blur, text structure, illumination variation, or detector-coordinate uncertainty.
 
 ### 13.5 Full-image training is not aligned with the OCR task
 
@@ -565,6 +659,10 @@ The pipeline creates a test manifest, but the documented OCR evaluation is based
 ### 13.8 OCR ground truth is limited
 
 Only 162 rows were manually reviewed, and 161 matched the comparison file in the documented evaluation. This is useful for debugging but too small and incomplete for a production accuracy claim.
+
+### 13.9 Stage 29 image metrics do not establish OCR improvement
+
+The validated crop-restoration checkpoint achieves mean holdout PSNR `29.340015` and SSIM `0.883002`, but image similarity does not guarantee character preservation or better recognition. The preliminary restoration comparison showed lower average PSNR/SSIM than the original crops while increasing non-empty OCR output. Stage 30 must therefore compare restoration and OCR together before the model is retained.
 
 ### 13.9 Generated artifacts are not portable
 
@@ -596,12 +694,12 @@ The following items are required before calling the project complete or export-r
 
 ### Priority 3: Build a crop-focused restoration model
 
-1. Train only on correctly aligned blurred/sharp number crops.
+1. Reconfirm the existing `342` blurred/sharp pairs after number-region annotations are corrected.
 2. Increase training duration with early stopping or a validation-based checkpoint.
-3. Compare a stronger architecture, such as a residual CNN or U-Net-style model, against the current baseline.
+3. Compare a stronger architecture, such as a residual CNN or U-Net-style model, against the current validated baseline.
 4. Add realistic blur, noise, brightness, contrast, and perspective augmentation.
 5. Measure crop PSNR and SSIM on held-out target crops.
-6. Evaluate character preservation, not only visual sharpness.
+6. Evaluate character preservation and OCR impact, not only visual sharpness.
 
 ### Priority 4: Improve text recognition
 
